@@ -78,8 +78,8 @@ async function addSingleSite() {
     console.log(`   Domain: ${domain}`)
     console.log(`   Topics: ${topics.map(t => t.name).join(', ')}`)
 
-  } catch (error) {
-    console.error(`❌ Failed to add site:`, error.message)
+  } catch (error: any) {
+    console.error(`❌ Failed to add site:`, error.message || error)
   }
 }
 
