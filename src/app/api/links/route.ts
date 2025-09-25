@@ -29,11 +29,11 @@ async function fetchOGData(url: string) {
     const html = await response.text()
 
     // Simple regex-based OG tag extraction (in production, use a proper parser)
-    const titleMatch = html.match(/<meta property="og:title" content="([^"]*)"/) ||
-                      html.match(/<title>([^<]*)</title>/)
-    const descMatch = html.match(/<meta property="og:description" content="([^"]*)"/) ||
-                     html.match(/<meta name="description" content="([^"]*)"/)
-    const imageMatch = html.match(/<meta property="og:image" content="([^"]*)"/)
+    const titleMatch = html.match(/<meta property="og:title" content="([^"]*)"/i) ||
+                      html.match(/<title>([^<]*)<\/title>/i)
+    const descMatch = html.match(/<meta property="og:description" content="([^"]*)"/i) ||
+                     html.match(/<meta name="description" content="([^"]*)"/i)
+    const imageMatch = html.match(/<meta property="og:image" content="([^"]*)"/i)
 
     return {
       title: titleMatch ? titleMatch[1] : 'Untitled',
