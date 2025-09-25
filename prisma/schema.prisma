@@ -1,0 +1,152 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  submittedLinks Link[]
+  events         Event[]
+  userTopics     UserTopic[]
+  collections    Collection[]
+
+  @@map("users")
+}
+
+model Topic {
+  id   String @id @default(cuid())
+  name String @unique
+  slug String @unique
+
+  // Relations
+  linkTopics LinkTopic[]
+  userTopics UserTopic[]
+
+  @@map("topics")
+}
+
+model Link {
+  id          String    @id @default(cuid())
+  url         String    @unique
+  title       String
+  description String?
+  domain      String
+  image       String?
+  status      LinkStatus @default(PENDING)
+  submittedBy String    @map("submitted_by")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  // Computed fields for ranking
+  viewCount    Int @default(0) @map("view_count")
+  likeCount    Int @default(0) @map("like_count")
+  dislikeCount Int @default(0) @map("dislike_count")
+  skipCount    Int @default(0) @map("skip_count")
+  saveCount    Int @default(0) @map("save_count")
+
+  // Relations
+  submitter     User           @relation(fields: [submittedBy], references: [id])
+  linkTopics    LinkTopic[]
+  events        Event[]
+  collectionLinks CollectionLink[]
+
+  @@map("links")
+}
+
+model LinkTopic {
+  linkId  String @map("link_id")
+  topicId String @map("topic_id")
+
+  // Relations
+  link  Link  @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@id([linkId, topicId])
+  @@map("link_topics")
+}
+
+model UserTopic {
+  userId  String @map("user_id")
+  topicId String @map("topic_id")
+  weight  Float  @default(1.0) // For personalization
+
+  // Relations
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@id([userId, topicId])
+  @@map("user_topics")
+}
+
+model Event {
+  id        String      @id @default(cuid())
+  userId    String      @map("user_id")
+  linkId    String      @map("link_id")
+  action    EventAction
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  link Link @relation(fields: [linkId], references: [id], onDelete: Cascade)
+
+  @@map("events")
+}
+
+model Collection {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  userId      String   @map("user_id")
+  isPublic    Boolean  @default(false) @map("is_public")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  collectionLinks CollectionLink[]
+
+  @@map("collections")
+}
+
+model CollectionLink {
+  collectionId String   @map("collection_id")
+  linkId       String   @map("link_id")
+  addedAt      DateTime @default(now()) @map("added_at")
+
+  // Relations
+  collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  link       Link       @relation(fields: [linkId], references: [id], onDelete: Cascade)
+
+  @@id([collectionId, linkId])
+  @@map("collection_links")
+}
+
+enum LinkStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  FLAGGED
+}
+
+enum EventAction {
+  VIEW
+  LIKE
+  DISLIKE
+  SKIP
+  SAVE
+  SHARE
+}
