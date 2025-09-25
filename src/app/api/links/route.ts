@@ -57,8 +57,20 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { url, userId, topics = [] } = body
 
-    if (!url || !userId) {
-      return NextResponse.json({ error: 'URL and userId are required' }, { status: 400 })
+    if (!url) {
+      return NextResponse.json({ error: 'URL is required' }, { status: 400 })
+    }
+
+    // Get or create a default user if no userId provided
+    let submitterId = userId
+    if (!submitterId) {
+      const defaultUser = await prisma.user.findFirst({
+        where: { email: 'test@example.com' }
+      })
+      if (!defaultUser) {
+        return NextResponse.json({ error: 'No default user found. Please run database seed.' }, { status: 500 })
+      }
+      submitterId = defaultUser.id
     }
 
     // Validate URL
@@ -89,7 +101,7 @@ export async function POST(request: NextRequest) {
         description: ogData.description,
         domain,
         image: ogData.image,
-        submittedBy: userId,
+        submittedBy: submitterId,
         status: 'PENDING' // Will need admin approval
       }
     })
