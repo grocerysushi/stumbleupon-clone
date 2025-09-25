@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { URL } from 'url'
 
+export const dynamic = 'force-dynamic'
+
 // Helper function to extract domain from URL
 function extractDomain(url: string): string {
   try {
